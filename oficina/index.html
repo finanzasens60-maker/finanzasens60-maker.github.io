@@ -17,17 +17,28 @@ h1{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--verde);marg
 .vivo::before{content:"● ";animation:parp 1s steps(2) infinite}
 @keyframes parp{50%{opacity:.2}}
 main{max-width:1100px;margin:0 auto;padding:0 16px 32px}
-#escena{width:100%;image-rendering:pixelated;image-rendering:crisp-edges;border:4px solid var(--borde);border-radius:6px;background:#000;cursor:pointer;display:block}
-.barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0;color:var(--tenue)}
-button{font-family:'Press Start 2P';font-size:9px;background:var(--bg2);color:var(--txt);border:2px solid var(--borde);padding:8px 10px;border-radius:4px;cursor:pointer}
+.escena{position:relative;border:4px solid var(--borde);border-radius:6px;overflow:hidden;background:#000}
+#escena{width:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block;cursor:default}
+#capa{position:absolute;inset:0;pointer-events:none}
+.burbuja{position:absolute;transform:translate(-50%,-100%);background:#fff;color:#111;font-family:'VT323',monospace;font-size:clamp(12px,1.55vw,18px);line-height:1.05;padding:3px 6px;border:2px solid #111;border-radius:4px;max-width:34%;width:max-content;text-align:center;box-shadow:2px 2px 0 rgba(0,0,0,.35);animation:pop .18s steps(3)}
+.burbuja::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-5px;border:5px solid transparent;border-top-color:#111}
+.burbuja.tic{background:#dcfce7;border-color:#166534}
+@keyframes pop{from{transform:translate(-50%,-80%) scale(.6)}}
+#etiqueta{position:absolute;pointer-events:none;background:rgba(11,19,32,.92);border:2px solid var(--amarillo);color:var(--amarillo);font-family:'Press Start 2P';font-size:9px;padding:5px 7px;border-radius:4px;white-space:nowrap;display:none;transform:translate(-50%,-140%)}
+.botones{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:6px 0;color:var(--tenue)}
+button{font-family:'Press Start 2P';font-size:9px;background:var(--bg2);color:var(--txt);border:2px solid var(--borde);padding:9px 10px;border-radius:4px;cursor:pointer}
 button:hover{border-color:var(--verde)}
+button:active{transform:translateY(1px)}
 #detalle{background:var(--bg2);border:3px solid var(--verde);border-radius:6px;padding:12px 14px;margin:10px 0;display:none}
-#detalle h2{font-family:'Press Start 2P';font-size:12px;margin:0 0 8px;color:var(--amarillo)}
+#detalle h2{font-family:'Press Start 2P';font-size:12px;margin:0 0 4px;color:var(--amarillo);line-height:1.5}
+#detalle .rol{color:var(--verde);margin-bottom:6px}
 #detalle pre{white-space:pre-wrap;font-family:'VT323';font-size:19px;margin:8px 0 0;color:var(--txt);max-height:300px;overflow:auto}
 .tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:12px}
 .t{background:var(--bg2);border:2px solid var(--borde);border-radius:6px;padding:10px;cursor:pointer}
 .t:hover{border-color:var(--verde)}
-.t b{font-family:'Press Start 2P';font-size:10px;display:block;margin-bottom:6px}
+.t b{font-family:'Press Start 2P';font-size:10px;display:block;margin-bottom:4px;line-height:1.5}
+.t i{font-style:normal;color:var(--verde);display:block;margin-bottom:4px}
 .est{font-family:'Press Start 2P';font-size:8px;padding:3px 6px;border-radius:3px;display:inline-block;margin-bottom:4px}
 .trab{background:var(--amarillo);color:#000}.ok{background:var(--verde);color:#000}.mal{background:var(--rojo);color:#fff}.zz{background:#2b3b55;color:var(--tenue)}
 .peq{color:var(--tenue);font-size:17px;line-height:1.25}
@@ -48,7 +59,7 @@ a{color:var(--verde)}
 </header>
 <main>
   <div id="login">
-    <b style="font-family:'Press Start 2P';font-size:11px;color:var(--amarillo)">CONECTAR LA OFICINA (una sola vez por dispositivo)</b>
+    <b style="font-family:'Press Start 2P';font-size:11px;color:var(--amarillo);line-height:1.6">CONECTAR LA OFICINA (una sola vez por dispositivo)</b>
     <ol>
       <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained token nuevo</a>.</li>
       <li>Nombre: <i>oficina</i>. Expiración: la que quieras (p. ej. 1 año).</li>
@@ -61,10 +72,20 @@ a{color:var(--verde)}
     <div id="error"></div>
   </div>
 
-  <canvas id="escena" width="320" height="200" aria-label="Oficina virtual con los agentes del canal"></canvas>
+  <div class="escena">
+    <canvas id="escena" width="384" height="240" aria-label="Oficina virtual con los agentes del canal"></canvas>
+    <div id="capa"></div>
+    <div id="etiqueta"></div>
+  </div>
+  <div class="botones">
+    <button data-ev="cafe">☕ PAUSA DE CAFÉ</button>
+    <button data-ev="reunion">📣 REUNIÓN CON TIC</button>
+    <button data-ev="fiesta">🎉 CELEBRAR</button>
+    <button data-ev="trabajar">💼 TODOS A SU PUESTO</button>
+  </div>
   <div class="barra">
     <span id="reloj">--</span>
-    <span id="actualizado">Toca un escritorio para ver qué hace cada agente</span>
+    <span id="actualizado">Toca a cualquier personaje para hablar con él</span>
     <button id="salir" title="Borrar la clave de este navegador">SALIR</button>
   </div>
   <div id="detalle"></div>
@@ -76,27 +97,73 @@ a{color:var(--verde)}
 const REPO = "finanzasens60-maker/canal-finanzas";
 const API = "https://api.github.com/repos/" + REPO;
 const CLAVE = "oficina_fin60_token";
+const W = 384, H = 240;
 
-// Agentes: posición en la oficina (px de 320x200), colores y horarios (cron UTC)
+// ======================= EQUIPO =======================
 const AGENTES = [
-  {id:"supervisor", nombre:"Tic (supervisor)", tarea:"Revisa que todo funcione", x:136, y:52, tic:true, cron:["41 13 * * *"]},
-  {id:"guionista", nombre:"Guionista", tarea:"Escribe los guiones", x:22, y:92, pelo:"#5b3a1e", ropa:"#3b82f6", piel:"#f1c27d", cron:["23 20 * * 0,2,4"]},
-  {id:"optimizador", nombre:"Optimizador", tarea:"Títulos y miniaturas", x:84, y:92, pelo:"#111", ropa:"#a855f7", piel:"#c68642", cron:["19 22 * * 0,2,4"]},
-  {id:"editor", nombre:"Editor", tarea:"Verifica cifras y guiones", x:146, y:92, pelo:"#d4a017", ropa:"#ef4444", piel:"#ffdbac", cron:["37 23 * * 0,2,4"]},
-  {id:"analista", nombre:"Analista", tarea:"Estadísticas y estrategia", x:208, y:92, pelo:"#7a7a7a", ropa:"#14b8a6", piel:"#e0ac69", gafas:true, cron:["13 16 * * 3,6"]},
-  {id:"comunidad", nombre:"Comunidad", tarea:"Responde comentarios", x:22, y:146, pelo:"#8b1a1a", ropa:"#f97316", piel:"#f1c27d", cron:["47 16 * * *","47 0 * * *"]},
-  {id:"promocion", nombre:"Promoción", tarea:"Prepara publicaciones", x:84, y:146, pelo:"#222", ropa:"#ec4899", piel:"#8d5524", cron:["47 14 * * *"]},
-  {id:"multiplataforma", nombre:"Multiplataforma", tarea:"TikTok, Reels y Facebook", x:146, y:146, pelo:"#4a2c0f", ropa:"#06b6d4", piel:"#ffdbac", cron:["23 14 * * 1,3,5"]},
-  {id:"fabrica", nombre:"Fábrica de videos", tarea:"Genera y sube los videos", x:262, y:70, robot:true, flujo:"Fabrica diaria de videos", cron:["17 11 * * *"]},
-  {id:"cartero", nombre:"Robot de comunidad", tarea:"Publica respuestas y estadísticas", x:262, y:146, robot:true, flujo:"Comunidad y estadisticas (2 veces al dia)", cron:["17 18 * * *","47 2 * * *"]},
+  {id:"supervisor", nombre:"Tic", corto:"TIC", rol:"Jefe de operaciones (supervisor)", tarea:"Revisa cada mañana que la fábrica y el equipo funcionen", tic:true, mesa:[184,130], cron:["41 13 * * *"],
+   frases:["Tic, tac… ¡tu dinero no espera!","¿Todo en orden, equipo?","Revisando la cola de guiones…","¡Buen trabajo, sigan así!","Un video al día, sin falta"]},
+  {id:"guionista", nombre:"Valentina", corto:"VALE", rol:"Guionista", tarea:"Escribe los guiones de videos y Shorts", mesa:[16,70], pelo:"#5b3a1e", ropa:"#3b82f6", piel:"#f1c27d", largo:true, cron:["23 20 * * 0,2,4"],
+   frases:["¿Y si el próximo video es sobre la prima?","Tengo un gancho buenísimo…","Un buen guion empieza con una pregunta"]},
+  {id:"optimizador", nombre:"Mateo", corto:"MATEO", rol:"Optimizador de clics", tarea:"Mejora títulos, miniaturas y comentarios", mesa:[72,70], pelo:"#111", ropa:"#a855f7", piel:"#c68642", cron:["19 22 * * 0,2,4"],
+   frases:["Ese título necesita un número","Miniatura A o B… ¿tú cuál eliges?","Curiosidad + beneficio = clic"]},
+  {id:"editor", nombre:"Sofía", corto:"SOFIA", rol:"Editora y verificadora", tarea:"Revisa cifras, ortografía y reglas antes de producir", mesa:[128,70], pelo:"#d4a017", ropa:"#ef4444", piel:"#ffdbac", largo:true, cron:["37 23 * * 0,2,4"],
+   frases:["Recalculé el interés compuesto: cuadra","Ojo con las tildes, equipo","Sin fuentes, no hay dato"]},
+  {id:"analista", nombre:"Andrés", corto:"ANDRES", rol:"Analista de datos", tarea:"Estudia estadísticas y ajusta la estrategia", mesa:[184,70], pelo:"#7a7a7a", ropa:"#14b8a6", piel:"#e0ac69", gafas:true, cron:["13 16 * * 3,6"],
+   frases:["Los Shorts con pregunta retienen más","Las vistas suben los martes","Datos mata opinión"]},
+  {id:"comunidad", nombre:"Camila", corto:"CAMILA", rol:"Community manager", tarea:"Lee y responde los comentarios del canal", mesa:[16,130], pelo:"#8b1a1a", ropa:"#f97316", piel:"#f1c27d", largo:true, cron:["47 16 * * *","47 0 * * *"],
+   frases:["¡Nos comentaron desde México!","Respondí a todos con cariño","La comunidad pide más videos de deudas"]},
+  {id:"promocion", nombre:"Diego", corto:"DIEGO", rol:"Promoción orgánica", tarea:"Prepara publicaciones y estrategia para crecer", mesa:[72,130], pelo:"#222", ropa:"#ec4899", piel:"#8d5524", cron:["47 14 * * *"],
+   frases:["Encuesta lista para la comunidad","Nada de spam: solo valor","Hoy compartimos el video del día"]},
+  {id:"multiplataforma", nombre:"Lucía", corto:"LUCIA", rol:"Redes: TikTok, Reels y Facebook", tarea:"Adapta los Shorts y arma el plan de publicación", mesa:[128,130], pelo:"#4a2c0f", ropa:"#06b6d4", piel:"#ffdbac", largo:true, cron:["23 14 * * 1,3,5"],
+   frases:["Este Short pinta viral en TikTok","Hashtags listos","Mañana toca Reels a las 7 p. m."]},
+  {id:"fabrica", nombre:"Fabri", corto:"FABRI", rol:"Robot productor de videos", tarea:"Genera, sube y programa los videos cada mañana", robot:true, flujo:"Fabrica diaria de videos", cron:["17 11 * * *"],
+   frases:["BIP. Video renderizado.","Subiendo a YouTube… BIP","Mis engranajes están listos"]},
+  {id:"cartero", nombre:"Pixel", corto:"PIXEL", rol:"Robot cartero", tarea:"Publica respuestas a comentarios y trae estadísticas", robot:true, flujo:"Comunidad y estadisticas (2 veces al dia)", cron:["17 18 * * *","47 2 * * *"],
+   frases:["Correo entregado. BIP","Traje las estadísticas","¡Tienen comentarios nuevos!"]},
 ];
 const porId = Object.fromEntries(AGENTES.map(a => [a.id, a]));
-AGENTES.forEach(a => Object.assign(a, {estado:"zz", paso:"", ultimo:null, resumen:"", proximo:null}));
+const PERSONAS = AGENTES.filter(a => !a.robot && !a.tic);
+const TIC = porId.supervisor;
+AGENTES.forEach(a => Object.assign(a, {estado:"zz", paso:"", ultimo:null, resumen:"", proximo:null, frase:"", fraseFin:0, salto:0}));
+PERSONAS.forEach(p => { p.x = p.mesa[0]+16; p.y = p.mesa[1]+40; p.tx = p.x; p.ty = p.y; p.act = null; p.actFin = 0; p.dir = 1; p.llego = true; p.sentado = false; });
+Object.assign(TIC, {x:200, y:146, tx:200, ty:146, act:null, actFin:0});
+porId.fabrica.x = 349; porId.fabrica.y = 66;
+porId.cartero.x = 346; porId.cartero.y = 204;
+
+const FRASES = {
+  cafe:["Un tinto y seguimos","¿Sabías que $3 diarios son $1.095 al año?","Café de oficina: gasto hormiga evitado"],
+  agua:["Hidratarse también es invertir","¡Agüita fresca!"],
+  sofa:["Cinco minutitos y vuelvo…","Leyendo sobre interés compuesto","Zzz… soñando con mi fondo de emergencia"],
+  pingpong:["¡Punto para mí!","Ese saque rinde más que un CDT","¡Revancha!"],
+  leer:["Este libro de finanzas está buenísimo","Apuntando ideas para guiones"],
+  ventana:["Qué bonita se ve la ciudad","Buen día para ahorrar"],
+  plantas:["Las plantas, como el ahorro, crecen poco a poco","A regar mi inversión verde"],
+  escritorio:["Ordenando mis notas","Revisando el correo"],
+  estirar:["¡Hay que estirarse!","Uff, qué buena pausa activa"],
+  charla:["¿Viste el último Short?","¿Qué tal el fin de semana?","¿Ya ahorraste este mes?","Jaja, buenísimo","Oye, ¿y si hacemos un video de eso?"],
+  reunion:["¡Presente!","Escuchando a Tic","Anotado, jefe"],
+  fiesta:["¡Vamos equipo!","¡Wiii!","¡Celebremos!","¡A por los 1.000 suscriptores!"],
+};
+
+// ======================= LUGARES =======================
+const LUGARES = {
+  cafe:[{x:252,y:62},{x:262,y:68},{x:242,y:70}],
+  agua:[{x:280,y:62},{x:290,y:68}],
+  leer:[{x:308,y:60}],
+  ventana:[{x:30,y:58},{x:50,y:58},{x:170,y:58},{x:190,y:58}],
+  sofa:[{x:262,y:212,sofa:true},{x:278,y:212,sofa:true},{x:294,y:212,sofa:true}],
+  plantas:[{x:228,y:74},{x:14,y:222}],
+  pingpong:[{x:258,y:134,lado:1},{x:322,y:134,lado:-1}],
+};
+const ocupado = new Map(); // "lugar#i" -> id
 
 let token = null; try { token = localStorage.getItem(CLAVE); } catch(e) {}
-let seleccionado = null, recientes = [];
+let seleccionado = null, recientes = [], evento = null, confeti = [];
+const rnd = (a,b) => a + Math.random()*(b-a);
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 
-// ---------- utilidades ----------
+// ======================= UTILIDADES =======================
 const hBog = d => d.toLocaleString("es-CO",{timeZone:"America/Bogota",weekday:"short",hour:"numeric",minute:"2-digit"});
 function hace(d){ const s=(Date.now()-d)/1000; if(s<60) return "hace un momento"; if(s<3600) return `hace ${Math.round(s/60)} min`; if(s<86400) return `hace ${Math.round(s/3600)} h`; return `hace ${Math.round(s/86400)} d`; }
 function proximo(crons){
@@ -117,8 +184,11 @@ async function gh(ruta, raw){
   if (!r.ok) throw new Error(r.status);
   return raw ? r.text() : r.json();
 }
+function decir(a, texto, ms){ a.frase = texto; a.fraseFin = performance.now() + (ms || 3800); }
+function pickLibre(arr){ const ahora = performance.now(); const usadas = new Set(AGENTES.filter(a => a.fraseFin > ahora).map(a => a.frase)); const l = arr.filter(f => !usadas.has(f)); return pick(l.length ? l : arr); }
+const hablando = () => AGENTES.filter(a => a.fraseFin > performance.now()).length;
 
-// ---------- datos de GitHub ----------
+// ======================= DATOS DE GITHUB =======================
 function agenteDeRun(run){
   const m = /^Agente (\w+)/.exec(run.display_title || "");
   if (m && porId[m[1]]) return porId[m[1]];
@@ -128,30 +198,28 @@ async function actualizar(){
   if (!token) return;
   try {
     const {workflow_runs: runs} = await gh("/actions/runs?per_page=50");
-    const vistos = new Set();
-    recientes = [];
+    const vistos = new Set(); recientes = [];
     for (const run of runs){
       const a = agenteDeRun(run); if (!a) continue;
       recientes.push({a, run});
       if (vistos.has(a.id)) continue; vistos.add(a.id);
-      a.ultimo = run;
+      const antes = a.estado; a.ultimo = run;
       if (run.status !== "completed"){
         a.estado = "trab"; a.paso = "Arrancando…";
-        try {
-          const {jobs} = await gh(`/actions/runs/${run.id}/jobs`);
-          const st = (jobs[0]?.steps || []).find(s => s.status === "in_progress");
-          if (st) a.paso = st.name;
-        } catch(e) {}
+        try { const {jobs} = await gh(`/actions/runs/${run.id}/jobs`);
+              const st = (jobs[0]?.steps || []).find(s => s.status === "in_progress"); if (st) a.paso = st.name; } catch(e) {}
+        if (antes !== "trab") decir(a, a.robot ? "BIP BIP, ¡a producir!" : "¡Me toca! A trabajar 💪");
       } else {
         a.estado = run.conclusion === "success" ? "ok" : (run.conclusion === "cancelled" || run.conclusion === "skipped" ? "zz" : "mal");
         a.paso = "";
+        if (antes === "trab") decir(a, a.estado === "ok" ? "¡Listo! Turno terminado ✅" : "Uy, algo falló. Revisen GitHub ❗", 6000);
       }
     }
     AGENTES.forEach(a => a.proximo = proximo(a.cron));
     document.getElementById("actualizado").textContent = "Actualizado " + new Date().toLocaleTimeString("es-CO",{timeZone:"America/Bogota"});
     pintarTarjetas(); pintarFeed(); if (seleccionado) mostrar(seleccionado);
   } catch(e){
-    if (e.message === "clave"){ pedirClave("La clave no funciona o expiró. Crea una nueva."); }
+    if (e.message === "clave") pedirClave("La clave no funciona o expiró. Crea una nueva.");
     else document.getElementById("actualizado").textContent = "Sin conexión con GitHub, reintentando…";
   }
 }
@@ -159,44 +227,56 @@ async function cargarResumenes(){
   if (!token) return;
   for (const a of AGENTES){
     if (a.robot) continue;
-    try { const j = JSON.parse(await gh(`/contents/oficina/estado/${a.id}.json`, true)); a.resumen = j.resumen || ""; a.fechaResumen = j.fecha; }
+    try { const j = JSON.parse(await gh(`/contents/oficina/estado/${a.id}.json`, true)); a.resumen = j.resumen || ""; }
     catch(e){ if (e.message === "clave") return; }
   }
   if (seleccionado) mostrar(seleccionado);
 }
 
-// ---------- interfaz ----------
-const ETQ = {trab:"TRABAJANDO", ok:"LISTO", mal:"CON ERROR", zz:"DESCANSANDO"};
+// ======================= PANEL =======================
+const ETQ = {trab:"TRABAJANDO", ok:"LISTO", mal:"CON ERROR", zz:"LIBRE"};
+const ACT_TXT = {cafe:"tomando café", agua:"tomando agua", sofa:"descansando en el sofá", pingpong:"jugando ping-pong", leer:"leyendo en la biblioteca", ventana:"mirando por la ventana", plantas:"regando las plantas", escritorio:"organizando su escritorio", estirar:"haciendo pausa activa", charla:"conversando con un compañero", reunion:"en reunión con Tic", fiesta:"celebrando", trabajar:"en su puesto", patrulla:"dando una ronda", mesa:"en su escritorio"};
+function queHace(a){
+  if (a.estado === "trab") return `Trabajando en: ${a.paso}`;
+  if (a.robot) return "En espera, cargando baterías";
+  return "Ahora: " + (ACT_TXT[a.act] || "pensando qué hacer");
+}
 function pintarTarjetas(){
   document.getElementById("tarjetas").innerHTML = AGENTES.map(a => {
-    const e = a.estado, u = a.ultimo ? new Date(a.ultimo.updated_at) : null;
-    const desc = e === "trab" ? `En: ${a.paso}` : (u ? `Último turno ${hace(u)}` : "Aún sin turnos");
-    return `<div class="t" data-id="${a.id}"><b>${a.nombre}</b><span class="est ${e}">${ETQ[e]}</span><div class="peq">${a.tarea}<br>${desc}<br>Próximo: ${a.proximo ? hBog(a.proximo) : "—"}</div></div>`;
+    const u = a.ultimo ? new Date(a.ultimo.updated_at) : null;
+    return `<div class="t" data-id="${a.id}"><b>${a.nombre}</b><i>${a.rol}</i><span class="est ${a.estado}">${ETQ[a.estado]}</span>
+      <div class="peq">${queHace(a)}<br>${u ? `Último turno ${hace(u)}` : "Aún sin turnos"}<br>Próximo: ${a.proximo ? hBog(a.proximo) : "—"}</div></div>`;
   }).join("");
-  document.querySelectorAll(".t").forEach(t => t.onclick = () => mostrar(porId[t.dataset.id], true));
+  document.querySelectorAll(".t").forEach(t => t.onclick = () => tocar(porId[t.dataset.id], true));
 }
 function pintarFeed(){
   document.getElementById("lista").innerHTML = recientes.slice(0, 12).map(({a, run}) => {
     const e = run.status !== "completed" ? "⏳ trabajando" : run.conclusion === "success" ? "✅ terminó" : run.conclusion === "cancelled" ? "⏹ cancelado" : "❌ falló";
-    return `<div>${hBog(new Date(run.created_at))} · <b>${a.nombre}</b> ${e} · <a href="${run.html_url}" target="_blank" rel="noopener">ver</a></div>`;
+    return `<div>${hBog(new Date(run.created_at))} · <b>${a.nombre}</b> (${a.rol}) ${e} · <a href="${run.html_url}" target="_blank" rel="noopener">ver</a></div>`;
   }).join("") || "<div>Sin actividad todavía.</div>";
 }
-function esc(s){ return (s||"").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+const esc = s => (s||"").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 function mostrar(a, desplazar){
   seleccionado = a;
   const d = document.getElementById("detalle"); d.style.display = "block";
   const u = a.ultimo;
-  d.innerHTML = `<h2>${a.nombre}</h2><span class="est ${a.estado}">${ETQ[a.estado]}</span>
-   <div class="peq">${a.tarea}${a.estado === "trab" ? `<br>Paso actual: <b>${esc(a.paso)}</b>` : ""}
+  d.innerHTML = `<h2>${a.nombre}</h2><div class="rol">${a.rol}</div><span class="est ${a.estado}">${ETQ[a.estado]}</span>
+   <div class="peq">${a.tarea}<br><b>${esc(queHace(a))}</b>
    ${u ? `<br>Último turno: ${hBog(new Date(u.created_at))} (${hace(new Date(u.updated_at))}) · <a href="${u.html_url}" target="_blank" rel="noopener">ver en GitHub</a>` : ""}
    <br>Próximo turno: ${a.proximo ? hBog(a.proximo) : "—"}</div>
-   ${a.resumen ? `<pre>💬 ${esc(a.resumen)}</pre>` : (a.robot ? "" : `<pre class="peq">Aún no hay resumen guardado de este agente.</pre>`)}`;
+   ${a.resumen ? `<pre>💬 Último informe:\n${esc(a.resumen)}</pre>` : (a.robot ? "" : `<pre class="peq">Aún no hay informe guardado de ${a.nombre}.</pre>`)}`;
   if (desplazar) d.scrollIntoView({behavior:"smooth", block:"nearest"});
 }
-function pedirClave(msg){
-  document.getElementById("login").style.display = "block";
-  document.getElementById("error").textContent = msg || "";
+function tocar(a, desplazar){
+  a.salto = performance.now();
+  let t;
+  if (a.estado === "trab") t = `¡Estoy en ello! ${a.paso}`;
+  else if (Math.random() < .5) t = `Hola, soy ${a.nombre}, ${a.rol.toLowerCase()}.` + (a.proximo ? ` Vuelvo a trabajar el ${hBog(a.proximo)}` : "");
+  else t = pick(a.frases);
+  decir(a, t, 4500);
+  mostrar(a, desplazar);
 }
+function pedirClave(msg){ document.getElementById("login").style.display = "block"; document.getElementById("error").textContent = msg || ""; }
 document.getElementById("guardar").onclick = async () => {
   const v = document.getElementById("clave").value.trim(); if (!v) return;
   token = v;
@@ -207,149 +287,395 @@ document.getElementById("guardar").onclick = async () => {
 };
 document.getElementById("salir").onclick = () => { try { localStorage.removeItem(CLAVE); } catch(e) {} token = null; pedirClave("Clave borrada de este navegador."); };
 
-// ---------- escena pixel art ----------
+// ======================= EVENTOS =======================
+document.querySelectorAll("[data-ev]").forEach(b => b.onclick = () => lanzarEvento(b.dataset.ev));
+function lanzarEvento(tipo){
+  const ahora = performance.now();
+  evento = {tipo, fin: ahora + (tipo === "fiesta" ? 9000 : 22000)};
+  if (tipo === "fiesta") PERSONAS.forEach(p => { if (p.estado !== "trab"){ if (p.rival){ p.rival = null; } liberar(p); p.act = "fiesta"; p.actFin = evento.fin; ir(p, p.x, p.y, {mesa: p.sentado}); } });
+  else { PERSONAS.forEach(p => { p.act = null; p.actFin = 0; liberar(p); }); TIC.act = null; }
+  if (tipo === "fiesta"){ for (let i=0;i<140;i++) confeti.push({x:rnd(0,W), y:rnd(-80,0), vy:rnd(.02,.06), vx:rnd(-.02,.02), c:pick(["#22C55E","#FACC15","#F43F5E","#3b82f6","#a855f7","#fff"]), fin: ahora + rnd(5000,9000)}); }
+  if (tipo === "reunion") decir(TIC, "¡Equipo, a reunión! Tic, tac…", 4000);
+  if (tipo === "cafe") decir(TIC, "¡Pausa de café para todos! ☕", 4000);
+  if (tipo === "trabajar") decir(TIC, "¡Todos a su puesto!", 3500);
+  PERSONAS.filter(p => p.estado === "trab").forEach((p,i) => setTimeout(() => decir(p, "¡Yo sigo trabajando!", 3000), 600 + i*400));
+}
+function lugarEvento(p, i){
+  const t = evento.tipo;
+  if (t === "cafe"){ const ang = i*0.9; return {x: 262 + Math.cos(ang)*(14 + (i%2)*10), y: 78 + Math.sin(ang)*8 + i*2}; }
+  if (t === "reunion"){ const ang = -Math.PI/2 + (i+1)*(Math.PI*2/(PERSONAS.length+1)); return {x: 120 + Math.cos(ang)*34, y: 208 + Math.sin(ang)*16}; }
+  if (t === "trabajar") return {x:p.mesa[0]+16, y:p.mesa[1]+12, mesa:true};
+  return null; // fiesta: se quedan donde están
+}
+
+// ======================= COMPORTAMIENTO =======================
+function liberar(p){ for (const [k,v] of ocupado) if (v === p.id) ocupado.delete(k); }
+function reservar(lugar, p){
+  const lista = LUGARES[lugar].map((l,i) => ({...l, k: lugar+"#"+i})).filter(l => !ocupado.has(l.k));
+  if (!lista.length) return null;
+  const l = pick(lista); ocupado.set(l.k, p.id); return l;
+}
+function libres(excepto){ return PERSONAS.filter(q => q !== excepto && q.estado !== "trab" && !["pingpong","charla"].includes(q.act)); }
+function ir(p, x, y, extra){ p.tx = x; p.ty = y; p.llego = false; p.sofa = !!extra?.sofa; p.mesaPose = !!extra?.mesa; p.lado = extra?.lado || 0; }
+function elegir(p, ahora){
+  liberar(p);
+  const opciones = ["cafe","agua","sofa","pingpong","leer","ventana","plantas","escritorio","estirar","charla","charla"];
+  for (let intento = 0; intento < 6; intento++){
+    const act = pick(opciones);
+    const dur = rnd(9000, 20000);
+    if (act === "pingpong"){
+      const comp = libres(p).filter(q => q.act !== "sofa"); if (!comp.length) continue;
+      const q = pick(comp); liberar(q);
+      const [l1, l2] = [LUGARES.pingpong[0], LUGARES.pingpong[1]];
+      if (ocupado.has("pingpong#0") || ocupado.has("pingpong#1")) continue;
+      ocupado.set("pingpong#0", p.id); ocupado.set("pingpong#1", q.id);
+      Object.assign(p, {act, actFin: ahora + dur, rival: q}); ir(p, l1.x, l1.y, l1);
+      Object.assign(q, {act, actFin: ahora + dur, rival: p}); ir(q, l2.x, l2.y, l2);
+      return;
+    }
+    if (act === "charla"){
+      const comp = libres(p); if (!comp.length) continue;
+      const q = pick(comp); liberar(q);
+      const mx = Math.max(20, Math.min(220, (p.x + q.x)/2)), my = Math.max(100, Math.min(176, (p.y + q.y)/2));
+      Object.assign(p, {act, actFin: ahora + dur, rival: q, turno: ahora + 1200}); ir(p, mx - 8, my);
+      Object.assign(q, {act, actFin: ahora + dur, rival: p, turno: ahora + 3600}); ir(q, mx + 8, my);
+      return;
+    }
+    if (act === "escritorio" || act === "estirar"){ p.act = act; p.actFin = ahora + dur; ir(p, p.mesa[0]+16, act === "estirar" ? p.mesa[1]+34 : p.mesa[1]+12, {mesa: act === "escritorio"}); return; }
+    const l = reservar(act, p); if (!l) continue;
+    p.act = act; p.actFin = ahora + dur; ir(p, l.x, l.y, l); return;
+  }
+  p.act = "estirar"; p.actFin = ahora + 8000; ir(p, p.mesa[0]+16, p.mesa[1]+34);
+}
+function actualizarPersona(p, ahora, dt){
+  // ¿qué debería estar haciendo?
+  if (p.estado === "trab"){
+    if (p.act !== "trabajar"){ liberar(p); if (p.rival) { p.rival.actFin = 0; p.rival = null; } p.act = "trabajar"; ir(p, p.mesa[0]+16, p.mesa[1]+12, {mesa:true}); }
+  } else if (evento && ahora < evento.fin && evento.tipo !== "fiesta"){
+    if (p.act !== evento.tipo){ const l = lugarEvento(p, PERSONAS.indexOf(p)); p.act = evento.tipo; ir(p, l.x, l.y, l); }
+  } else if (!p.act || ahora > p.actFin || p.act === "trabajar" || (evento === null && ["cafe","reunion","trabajar"].includes(p.act) && ahora > p.actFin)){
+    if (p.act === "pingpong" || p.act === "charla"){ const q = p.rival; p.rival = null; if (q && q.rival === p){ q.rival = null; q.actFin = 0; } }
+    elegir(p, ahora);
+  }
+  // movimiento
+  const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy);
+  if (d > 0.8){
+    const v = 0.032 * dt; p.x += dx/d * Math.min(v, d); p.y += dy/d * Math.min(v, d);
+    if (Math.abs(dx) > 0.5) p.dir = Math.sign(dx);
+    p.camina = true;
+  } else {
+    p.camina = false;
+    if (!p.llego){ p.llego = true;
+      if (p.act !== "trabajar" && FRASES[p.act] && Math.random() < .45 && hablando() < 3) decir(p, pickLibre(FRASES[p.act]));
+      if (p.act === "pingpong" && p.rival) p.dir = p.lado || 1;
+    }
+    if (p.act === "charla" && p.rival){ p.dir = Math.sign(p.rival.x - p.x) || 1;
+      if (p.rival.llego && ahora > p.turno){ decir(p, pickLibre(FRASES.charla), 2600); p.turno = ahora + rnd(5200, 7000); } }
+    else if (p.act && p.act !== "trabajar" && Math.random() < dt/16000 && hablando() < 2 && FRASES[p.act]) decir(p, pickLibre(FRASES[p.act]));
+    if (p.act === "trabajar" && Math.random() < dt/22000 && hablando() < 2) decir(p, p.paso ? `En: ${p.paso}` : "Concentrad@ 🤓", 3000);
+  }
+  if (evento && evento.tipo === "fiesta" && ahora < evento.fin && Math.random() < dt/700) p.salto = ahora;
+}
+function actualizarTic(ahora, dt){
+  const t = TIC;
+  if (t.estado === "trab"){ t.tx = 200; t.ty = 146; t.act = "mesa"; }
+  else if (evento && ahora < evento.fin && evento.tipo === "reunion"){ t.tx = 120; t.ty = 208; t.act = "reunion"; }
+  else if (!t.act || ahora > t.actFin || t.act === "reunion" || t.act === "mesa"){
+    const destinos = [[120,204],[200,146],...PERSONAS.map(p => [p.x + 12, p.y + 4]),[290,100],[60,112],[170,112]];
+    const [x,y] = pick(destinos); t.tx = Math.max(12, Math.min(372, x)); t.ty = Math.max(66, Math.min(226, y));
+    t.act = "patrulla"; t.actFin = ahora + rnd(7000, 14000);
+  }
+  const dx = t.tx - t.x, dy = t.ty - t.y, d = Math.hypot(dx, dy);
+  if (d > 0.8){ const v = 0.026 * dt; t.x += dx/d*Math.min(v,d); t.y += dy/d*Math.min(v,d); t.llego = false; }
+  else if (!t.llego){ t.llego = true; if (Math.random() < .4 && hablando() < 3) decir(t, pickLibre(t.frases)); }
+  if (evento && evento.tipo === "fiesta" && ahora < evento.fin && Math.random() < dt/700) t.salto = ahora;
+}
+
+// ======================= DIBUJO =======================
 const cv = document.getElementById("escena"), g = cv.getContext("2d");
 g.imageSmoothingEnabled = false;
-const R = (x,y,w,h,c) => { g.fillStyle = c; g.fillRect(x|0, y|0, w, h); };
-const PIX = { // fuente mínima 3x5 para etiquetas
+const R = (x,y,w,h,c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); };
+const PIX = {
   A:"010101111101101",B:"110101110101110",C:"011100100100011",D:"110101101101110",E:"111100110100111",F:"111100110100100",G:"011100101101011",H:"101101111101101",I:"111010010010111",J:"001001001101010",K:"101101110101101",L:"100100100100111",M:"101111111101101",N:"110101101101101",O:"010101101101010",P:"110101110100100",Q:"010101101110011",R:"110101110101101",S:"011100010001110",T:"111010010010010",U:"101101101101111",V:"101101101101010",W:"101101111111101",X:"101101010101101",Y:"101101010010010",Z:"111001010100111",
-  "0":"111101101101111","1":"010110010010111","2":"110001010100111","3":"110001010001110","4":"101101111001001","5":"111100110001110","6":"011100111101111","7":"111001010010010","8":"111101111101111","9":"111101111001110",":":"000010000010000"," ":"000000000000000","!":"010010010000010","?":"110001010000010",".":"000000000000010","-":"000000111000000"
+  "0":"111101101101111","1":"010110010010111","2":"110001010100111","3":"110001010001110","4":"101101111001001","5":"111100110001110","6":"011100111101111","7":"111001010010010","8":"111101111101111","9":"111101111001110",":":"000010000010000"," ":"000000000000000",".":"000000000000010"
 };
-function texto(s, x, y, c){ s = s.toUpperCase(); for (const ch of s){ const p = PIX[ch] || PIX[" "]; for (let i=0;i<15;i++) if (p[i]==="1") R(x+i%3, y+(i/3|0), 1, 1, c); x += 4; } }
-const ETIQ = {supervisor:"TIC",guionista:"GUION",optimizador:"CLICS",editor:"EDITOR",analista:"DATOS",comunidad:"COMUNIDAD",promocion:"PROMO",multiplataforma:"REDES",fabrica:"FABRICA",cartero:"CARTERO"};
+function texto(s, x, y, c){ for (const ch of s.toUpperCase()){ const p = PIX[ch] || PIX[" "]; for (let i=0;i<15;i++) if (p[i]==="1") R(x+i%3, y+(i/3|0), 1, 1, c); x += 4; } }
+const saltoDe = (a, ahora) => { const k = (ahora - a.salto)/450; return k >= 0 && k < 1 ? Math.sin(k*Math.PI)*6 : 0; };
 
 function fondo(t){
-  // pared
-  R(0,0,320,40,"#1b2a44"); R(0,36,320,4,"#0f1a2c");
-  for (let x=0;x<320;x+=16) R(x,0,1,36,"#203152");
-  // ventanas con cielo de Bogotá (día/noche)
+  R(0,0,W,46,"#1b2a44"); R(0,42,W,4,"#0f1a2c");
+  for (let x=0;x<W;x+=16) R(x,0,1,42,"#203152");
   const hora = +new Date().toLocaleString("en-US",{timeZone:"America/Bogota",hour:"numeric",hour12:false});
   const dia = hora >= 6 && hora < 18;
-  for (const wx of [8, 232]){ R(wx,6,64,24,"#0b0f1a"); R(wx+2,8,60,20, dia ? "#5fb3ff" : "#0d1b3d");
-    if (dia){ R(wx+44,11,6,6,"#ffe066"); R(wx+10,16,12,3,"#fff"); R(wx+13,14,6,2,"#fff"); }
-    else { for (let i=0;i<6;i++) R(wx+5+i*9, 10+(i*7)%14, 1,1,"#fff"); R(wx+48,12,5,3,"#e5e7eb"); R(wx+49,11,3,5,"#e5e7eb"); }
-    R(wx+31,8,2,20,"#0b0f1a"); for (let i=0;i<5;i++) R(wx+4+i*12, 26, 6, 2, "#0b0f1a"); }
+  for (const wx of [8, 152]){
+    R(wx,6,64,28,"#0b0f1a"); R(wx+2,8,60,24, dia ? "#5fb3ff" : "#0d1b3d");
+    if (dia){ R(wx+44,12,6,6,"#ffe066"); R(wx+10+((t/400|0)%20),18,12,3,"#fff"); R(wx+13+((t/400|0)%20),16,6,2,"#fff"); }
+    else { for (let i=0;i<6;i++) R(wx+5+i*9, 11+(i*7)%16, 1,1, (t/700+i|0)%3 ? "#fff" : "#64748b"); R(wx+48,13,5,3,"#e5e7eb"); R(wx+49,12,3,5,"#e5e7eb"); }
+    R(wx+31,8,2,24,"#0b0f1a"); R(wx,32,64,3,"#334155");
+  }
   // letrero
-  R(96,6,128,24,"#0b1320"); R(97,7,126,22,"#13243d");
-  texto("FINANZAS EN 60S", 104, 10, "#22C55E");
+  R(78,8,68,26,"#0b1320"); R(79,9,66,24,"#13243d");
+  texto("FINANZAS", 96, 12, "#22C55E"); texto("EN 60S", 100, 19, "#22C55E");
   const hh = new Date().toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"2-digit",minute:"2-digit",hour12:false});
-  texto(hh, 148, 19, (t/500|0)%2 ? "#FACC15" : "#d4b10f");
+  texto(hh, 102, 26, (t/500|0)%2 ? "#FACC15" : "#d4b10f");
+  // cafetera y dispensador de agua
+  R(244,22,18,22,"#3f3f46"); R(246,24,14,8,"#18181b"); R(249,34,8,6,"#e5e7eb"); R(251,26,4,3, (t/500|0)%2 ? "#ef4444" : "#7f1d1d");
+  R(274,14,12,14,"#93c5fd"); R(275,15,10,12,"#bfdbfe"); R(272,28,16,16,"#e5e7eb"); R(278,32,4,3,"#3b82f6");
+  // biblioteca
+  R(296,6,26,38,"#5c3a1a"); for (let f=0;f<3;f++){ R(298,8+f*12,22,10,"#3b2412"); for (let i=0;i<6;i++) R(299+i*3.5,9+f*12+(i%2),3,9-(i%2), ["#ef4444","#3b82f6","#22C55E","#FACC15","#a855f7","#f97316"][(i+f)%6]); }
   // piso
-  for (let y=40;y<200;y+=10) for (let x=0;x<320;x+=10) R(x,y,10,10, ((x+y)/10)%2 ? "#26344d" : "#2c3b57");
-  // alfombra de Tic
-  R(118,48,84,36,"#14532d"); R(120,50,80,32,"#166534");
-  // plantas y cafetera
-  planta(4,180); planta(306,40+8);
-  R(300,180,14,16,"#444"); R(302,176,10,6,"#222"); R(304,184,6,6, (t/400|0)%2 ? "#a16207" : "#854d0e");
-  // banda transportadora fábrica
-  R(250,104,66,6,"#3f3f46"); for (let i=0;i<8;i++) R(250+((i*9+(t/60|0))%66),105,3,4,"#18181b");
+  for (let y=46;y<H;y+=10) for (let x=0;x<W;x+=10) R(x,y,10,10, ((x+y)/10)%2 ? "#26344d" : "#2c3b57");
+  // zona lounge
+  R(236,46,148,194,"rgba(34,197,94,.05)");
+  // alfombra de reuniones
+  R(70,186,100,44,"#14532d"); R(72,188,96,40,"#166534"); texto("SALA TIC", 104, 222, "#4ade80");
+  // mesa de ping-pong (red) parte trasera
+  R(266,124,48,16,"#1d4ed8"); R(266,124,48,1,"#fff"); R(266,139,48,1,"#fff"); R(289,124,2,16,"#e5e7eb");
+  // sofá (respaldo)
+  R(254,198,52,10,"#7c3aed"); R(254,198,52,2,"#8b5cf6");
+  // buzón y cinta transportadora
+  R(368,192,10,14,"#1d4ed8"); R(369,193,8,3,"#1e3a8a"); R(372,206,2,12,"#1e293b");
+  R(322,100,62,6,"#3f3f46"); for (let i=0;i<8;i++) R(322+((i*9+(t/60|0))%62),101,3,4,"#18181b");
+}
+function frenteMuebles(){
+  R(266,140,48,2,"#1e3a8a"); R(270,142,2,8,"#334155"); R(308,142,2,8,"#334155"); // patas mesa ping-pong
+  R(252,208,56,8,"#6d28d9"); R(250,200,4,16,"#5b21b6"); R(306,200,4,16,"#5b21b6"); // sofá
 }
 function planta(x,y){ R(x,y-2,10,8,"#7c2d12"); R(x+1,y-10,8,9,"#15803d"); R(x+3,y-14,4,6,"#16a34a"); R(x-1,y-7,3,4,"#16a34a"); R(x+8,y-8,3,4,"#16a34a"); }
 
-function escritorio(a, t){
-  const {x,y} = a, trab = a.estado === "trab";
-  // monitor
+function mesa(a, t){
+  const [x,y] = a.mesa, trab = a.estado === "trab";
+  if (a.tic){ // mesa grande de Tic con dos monitores
+    R(x+2,y-4,13,11,"#0f172a"); R(x+18,y-4,13,11,"#0f172a");
+    R(x+3,y-3,11,8, trab ? "#0e3a22" : "#111827"); R(x+19,y-3,11,8, trab ? "#0e3a22" : "#111827");
+    if (trab) for (let i=0;i<3;i++){ R(x+4, y-2+i*2, 3+((t/150+i*3)|0)%8, 1, "#22C55E"); R(x+20, y-2+i*2, 2+((t/170+i*5)|0)%8, 1, "#FACC15"); }
+    return;
+  }
   R(x+6,y-4,20,13,"#0f172a");
-  const pant = trab ? "#0e3a22" : a.estado === "mal" ? "#4c0519" : "#111827";
+  const sentado = a.sentado;
+  const pant = trab ? "#0e3a22" : a.estado === "mal" ? "#4c0519" : sentado ? "#1e3a5f" : "#111827";
   R(x+7,y-3,18,10,pant);
   if (trab) for (let i=0;i<4;i++){ const w = 3 + ((t/120 + i*3)|0)%12; R(x+8, y-2+i*2, w, 1, "#22C55E"); }
-  if (a.estado === "mal") R(x+15,y-2,2,6,"#F43F5E"), R(x+15,y+5,2,1,"#F43F5E");
+  else if (sentado){ R(x+9,y-1,6,4,"#38bdf8"); R(x+16,y-1,7,1,"#94a3b8"); R(x+16,y+1,5,1,"#94a3b8"); }
+  if (a.estado === "mal"){ R(x+15,y-2,2,5,"#F43F5E"); R(x+15,y+4,2,1,"#F43F5E"); }
   R(x+14,y+9,4,2,"#0f172a");
-  // persona (detrás del escritorio)
-  persona(a, x+11, y+2, t);
-  // escritorio
-  R(x,y+11,32,6,"#8b5a2b"); R(x,y+11,32,1,"#a0522d"); R(x+2,y+17,3,8,"#5c3a1a"); R(x+27,y+17,3,8,"#5c3a1a");
-  R(x+9,y+12,14,2,"#d4d4d8"); // teclado
+}
+function frenteMesa(a){
+  const [x,y] = a.mesa;
+  const w = a.tic ? 34 : 32;
+  R(x,y+11,w,6,"#8b5a2b"); R(x,y+11,w,1,"#a0522d"); R(x+2,y+17,3,8,"#5c3a1a"); R(x+w-5,y+17,3,8,"#5c3a1a");
+  if (!a.tic) R(x+9,y+12,14,2,"#d4d4d8");
   if (a.id === "guionista") R(x+25,y+8,5,3,"#fef3c7");
-  if (a.id === "analista") { R(x+1,y+6,2,5,"#22C55E"); R(x+4,y+4,2,7,"#FACC15"); }
-  // etiqueta
-  texto(ETIQ[a.id], x + 16 - ETIQ[a.id].length*2, y+28, "#cbd5e1");
-  indicador(a, x+16, y-14, t);
+  if (a.id === "analista"){ R(x+1,y+6,2,5,"#22C55E"); R(x+4,y+4,2,7,"#FACC15"); }
+  if (a.id === "comunidad") R(x+26,y+7,4,4,"#f43f5e");
+  if (a.id === "promocion"){ R(x+25,y+6,2,5,"#FACC15"); R(x+24,y+6,4,2,"#FACC15"); }
+  if (a.id === "multiplataforma") R(x+26,y+6,3,5,"#111");
+  texto(a.corto, x + w/2 - a.corto.length*2, y+28, seleccionado === a ? "#FACC15" : "#cbd5e1");
 }
-function persona(a, cx, cy, t){
-  const trab = a.estado === "trab", dormido = a.estado === "zz";
-  const bob = trab ? ((t/150|0)%2) : 0;
-  const cab = dormido ? 2 : 0;
-  R(cx-4, cy+3, 10, 8, a.ropa);                      // cuerpo
-  R(cx-3, cy-5+cab, 8, 8, a.piel);                    // cabeza
-  R(cx-3, cy-6+cab, 8, 3, a.pelo); R(cx-4, cy-5+cab, 1, 4, a.pelo); R(cx+5, cy-5+cab, 1, 4, a.pelo);
-  if (!dormido){ R(cx-1, cy-2, 1, 1, "#111"); R(cx+2, cy-2, 1, 1, "#111"); }
-  else { R(cx-1, cy-1+cab, 2, 1, "#111"); R(cx+2, cy-1+cab, 2, 1, "#111"); }
-  if (a.gafas && !dormido){ R(cx-2,cy-3,3,3,"#111"); R(cx+1,cy-3,3,3,"#111"); R(cx-1,cy-2,1,1,a.piel); R(cx+2,cy-2,1,1,a.piel); }
-  // brazos tecleando
-  R(cx-6, cy+6 - bob, 3, 3, a.piel); R(cx+7, cy+6 - (trab ? 1-bob : 0), 3, 3, a.piel);
+
+function cabeza(p, x, y, dormido){
+  R(x-4, y, 8, 8, p.piel);
+  R(x-4, y-1, 8, 3, p.pelo); R(x-5, y, 1, 4, p.pelo); R(x+4, y, 1, 4, p.pelo);
+  if (p.largo){ R(x-5, y+1, 2, 9, p.pelo); R(x+3, y+1, 2, 9, p.pelo); }
+  const o = p.camina || p.act === "charla" || p.act === "pingpong" ? p.dir : 0;
+  if (dormido){ R(x-3+o, y+4, 2, 1, "#111"); R(x+1+o, y+4, 2, 1, "#111"); }
+  else { R(x-2+o, y+3, 1, 2, "#111"); R(x+1+o, y+3, 1, 2, "#111"); }
+  if (p.gafas && !dormido){ R(x-3+o,y+3,3,2,"#111"); R(x+1+o,y+3,3,2,"#111"); R(x-2+o,y+3,1,1,"#9ca3af"); R(x+2+o,y+3,1,1,"#9ca3af"); }
+  if (!dormido && (p.fraseFin > performance.now()) && ((performance.now()/140|0)%2)) R(x-1+o, y+6, 3, 1, "#7f1d1d");
 }
-function tic(a, t){
-  const {x,y} = a, trab = a.estado === "trab";
-  const cx = x + 24, cy = y + 12 + (Math.sin(t/400)*1.5|0);
-  // cronómetro: botón, cuerpo, cara
+function persona(p, t){
+  const ahora = performance.now(), j = saltoDe(p, ahora);
+  const x = Math.round(p.x), y = Math.round(p.y - j);
+  const dormido = p.act === "sofa" && p.llego && (p.id.length % 2 === 0);
+  // sentado en su escritorio (detrás de la mesa)
+  if (p.llego && p.mesaPose){
+    const trab = p.act === "trabajar", bob = trab ? ((t/150|0)%2) : 0;
+    R(x-5, y-9, 10, 9, p.ropa); cabeza(p, x, y-18, false);
+    R(x-7, y-4 - bob, 3, 3, p.piel); R(x+4, y-4 - (trab ? 1-bob : 0), 3, 3, p.piel);
+    return;
+  }
+  if (p.llego && p.sofa){
+    R(x-5, y-14, 10, 8, p.ropa); R(x-5, y-6, 10, 3, "#334155"); cabeza(p, x, y-22, dormido);
+    if (p.act === "sofa" && !dormido){ R(x-2, y-11, 5, 4, "#111"); R(x-1, y-10, 3, 2, "#38bdf8"); }
+    if (dormido){ const k = (t/600|0)%3; texto("Z", x+5+k*2, y-26-k*3, "#93c5fd"); }
+    return;
+  }
+  // de pie / caminando
+  const paso = p.camina ? ((t/140|0)%2) : 0;
+  R(x-3, y-6, 2, 6 - paso, "#1f2937"); R(x+1, y-6, 2, 6 - (p.camina ? 1-paso : 0), "#1f2937");
+  R(x-4, y-1 - paso, 3, 1, "#111"); R(x+1, y-1 - (p.camina ? 1-paso : 0), 3, 1, "#111");
+  R(x-5, y-14, 10, 8, p.ropa);
+  let estira = p.act === "estirar" && p.llego ? ((t/700|0)%2) : 0;
+  if (evento && evento.tipo === "fiesta" && ahora < evento.fin) estira = (t/250|0)%2;
+  if (estira){ R(x-7, y-22, 2, 8, p.ropa); R(x+5, y-22, 2, 8, p.ropa); R(x-7, y-24, 2, 2, p.piel); R(x+5, y-24, 2, 2, p.piel); }
+  else { const s = p.camina ? paso : 0; R(x-7, y-13 + s, 2, 6, p.ropa); R(x+5, y-13 + (p.camina ? 1-s : 0), 2, 6, p.ropa); R(x-7, y-7 + s, 2, 2, p.piel); R(x+5, y-7 + (p.camina ? 1-s : 0), 2, 2, p.piel); }
+  cabeza(p, x, y-22, false);
+  if (!p.llego) return;
+  // accesorios según actividad
+  const hx = x + (p.dir > 0 ? 6 : -9);
+  if (p.act === "cafe"){ R(hx, y-11, 3, 3, "#fff"); R(hx, y-11, 3, 1, "#7c2d12"); if ((t/300|0)%2) R(hx+1, y-14, 1, 2, "#cbd5e1"); }
+  if (p.act === "agua") R(hx, y-11, 3, 3, "#93c5fd");
+  if (p.act === "leer"){ R(x-4, y-13, 8, 5, "#b91c1c"); R(x, y-13, 1, 5, "#fde68a"); }
+  if (p.act === "plantas"){ R(hx-1, y-10, 5, 3, "#16a34a"); if ((t/200|0)%2) R(hx+4, y-8, 1, 3, "#60a5fa"); }
+  if (p.act === "pingpong"){ const sw = (t/250|0)%2; R(x + p.lado*6, y-14 - sw*2, 3, 4, "#dc2626"); R(x + p.lado*6 + 1, y-10 - sw*2, 1, 2, "#78350f"); }
+}
+function dibujarPingPong(t){
+  const a = PERSONAS.find(p => p.act === "pingpong" && p.llego && p.rival && p.rival.llego);
+  if (!a) return;
+  const k = (t % 1200)/1200, ida = (t/1200|0)%2;
+  const x = ida ? 266 + k*48 : 314 - k*48, y = 128 - Math.sin(k*Math.PI)*10;
+  R(x, y, 2, 2, "#fff"); R(x, 137, 2, 1, "rgba(0,0,0,.4)");
+}
+function dibujarTic(t){
+  const a = TIC, ahora = performance.now(), j = saltoDe(a, ahora), trab = a.estado === "trab";
+  const cx = Math.round(a.x), cy = Math.round(a.y - 12 - j + Math.sin(t/400)*1.5);
+  R(cx-6, Math.round(a.y)+1, 12, 2, "rgba(0,0,0,.35)");
   R(cx-2, cy-14, 4, 3, "#94a3b8"); R(cx-4, cy-12, 8, 2, "#64748b");
   for (let dy=-10; dy<=10; dy++){ const w = Math.round(Math.sqrt(100 - dy*dy)); R(cx-w, cy+dy, w*2, 1, "#16a34a"); }
   for (let dy=-8; dy<=8; dy++){ const w = Math.round(Math.sqrt(64 - dy*dy)); R(cx-w, cy+dy, w*2, 1, "#f8fafc"); }
-  const ang = t/ (trab ? 150 : 900); R(cx + Math.round(Math.cos(ang)*5) , cy + Math.round(Math.sin(ang)*5), 2, 2, "#22C55E");
-  const parp = ((t/1800|0) % 5 === 0) && (t % 1800 < 150);
-  if (a.estado === "zz"){ R(cx-4,cy-1,3,1,"#111"); R(cx+2,cy-1,3,1,"#111"); }
-  else if (!parp){ R(cx-4,cy-3,2,3,"#111"); R(cx+3,cy-3,2,3,"#111"); } else { R(cx-4,cy-2,2,1,"#111"); R(cx+3,cy-2,2,1,"#111"); }
-  R(cx-2, cy+3, 5, 1, "#111"); R(cx-3, cy+2, 1, 1, "#111"); R(cx+3, cy+2, 1, 1, "#111");
-  // bracitos (saluda si trabaja)
-  const s = trab ? ((t/200|0)%2)*2 : 0;
+  const ang = t/(trab ? 150 : 900); R(cx + Math.round(Math.cos(ang)*5), cy + Math.round(Math.sin(ang)*5), 2, 2, "#22C55E");
+  const parp = (t % 3200) < 140;
+  if (!parp){ R(cx-4,cy-3,2,3,"#111"); R(cx+3,cy-3,2,3,"#111"); } else { R(cx-4,cy-2,2,1,"#111"); R(cx+3,cy-2,2,1,"#111"); }
+  const habla = a.fraseFin > ahora && (ahora/140|0)%2;
+  if (habla) R(cx-2, cy+2, 5, 2, "#111"); else { R(cx-2, cy+3, 5, 1, "#111"); R(cx-3, cy+2, 1, 1, "#111"); R(cx+3, cy+2, 1, 1, "#111"); }
+  const s = trab || a.act === "reunion" || (evento && evento.tipo === "fiesta" && ahora < evento.fin) ? ((t/200|0)%2)*3 : 0;
   R(cx-13, cy-2 - s, 3, 6, "#16a34a"); R(cx+10, cy-2, 3, 6, "#16a34a");
-  texto("TIC", cx-6, y+30, "#22C55E");
-  indicador(a, cx, y-6, t);
+  if (trab){ R(cx+10, cy+2, 6, 7, "#a16207"); R(cx+11, cy+3, 4, 5, "#fef3c7"); } // portapapeles
+  indicador(a, cx, cy-28, t);
 }
-function robot(a, t){
-  const {x,y} = a, trab = a.estado === "trab";
-  if (a.id === "fabrica"){ // máquina de videos
-    R(x-6,y-10,46,30,"#334155"); R(x-4,y-8,42,26,"#475569");
-    R(x,y-4,18,12,"#0f172a"); R(x+1,y-3,16,10, trab ? "#7f1d1d" : "#1e293b");
-    if (trab){ R(x+7,y-1,1,6,"#fff"); R(x+8,y,1,4,"#fff"); R(x+9,y+1,1,2,"#fff"); }
-    R(x+22,y-4,12,4, trab && (t/250|0)%2 ? "#22C55E" : "#14532d"); R(x+22,y+2,12,4, a.estado === "mal" ? "#F43F5E" : "#3f3f46");
-    if (trab){ for (let i=0;i<3;i++){ const px = x+40 + ((t/30 + i*22)|0)%26; R(px,y+25,6,5,"#ef4444"); R(px+2,y+26,1,3,"#fff"); R(px+3,y+27,1,1,"#fff"); } }
-    texto("FABRICA", x+4, y+22, "#cbd5e1");
-    indicador(a, x+17, y-22, t);
-  } else { // robot cartero
+function dibujarRobot(a, t){
+  const trab = a.estado === "trab", x = a.x, y = a.y, ahora = performance.now(), j = saltoDe(a, ahora);
+  if (a.id === "fabrica"){
+    R(x-26,y-18-j,50,30,"#334155"); R(x-24,y-16-j,46,26,"#475569");
+    R(x-20,y-12-j,18,12,"#0f172a"); R(x-19,y-11-j,16,10, trab ? "#7f1d1d" : "#1e293b");
+    if (trab){ R(x-13,y-9-j,1,6,"#fff"); R(x-12,y-8-j,1,4,"#fff"); R(x-11,y-7-j,1,2,"#fff"); }
+    R(x+2,y-12-j,14,4, trab && (t/250|0)%2 ? "#22C55E" : "#14532d"); R(x+2,y-6-j,14,4, a.estado === "mal" ? "#F43F5E" : "#3f3f46");
+    // ojos del robot (personalidad)
+    const parp = (t % 2800) < 120; R(x+4,y+1-j,3,parp?1:3,"#38bdf8"); R(x+11,y+1-j,3,parp?1:3,"#38bdf8");
+    if (trab) for (let i=0;i<3;i++){ const px = 324 + ((t/30 + i*22)|0)%56; R(px,y+29,6,5,"#ef4444"); R(px+2,y+30,1,3,"#fff"); R(px+3,y+31,1,1,"#fff"); }
+    texto(a.corto, x-9, y+17, seleccionado === a ? "#FACC15" : "#cbd5e1");
+    indicador(a, x, y-32, t);
+  } else {
     const pasos = trab ? Math.round(Math.sin(t/300)*14) : 0;
-    const rx = x + 10 + pasos, ry = y;
+    const rx = x - 4 + pasos, ry = y - j;
     R(rx+3, ry-14, 1, 3, "#94a3b8"); R(rx+2, ry-16, 3, 2, trab && (t/200|0)%2 ? "#F43F5E" : "#64748b");
-    R(rx-2, ry-11, 11, 9, "#94a3b8"); R(rx, ry-9, 2, 2, trab ? "#22C55E" : "#334155"); R(rx+5, ry-9, 2, 2, trab ? "#22C55E" : "#334155");
+    R(rx-2, ry-11, 11, 9, "#94a3b8"); const parp = (t % 3000) < 120;
+    R(rx, ry-9, 2, parp?1:2, trab ? "#22C55E" : "#38bdf8"); R(rx+5, ry-9, 2, parp?1:2, trab ? "#22C55E" : "#38bdf8");
     R(rx-3, ry-1, 13, 11, "#64748b"); R(rx+1, ry+2, 5, 4, "#f8fafc"); R(rx+1, ry+2, 5, 1, "#ef4444");
     R(rx-1, ry+10, 3, 4, "#334155"); R(rx+5, ry+10, 3, 4, "#334155");
-    R(x+34, y-2, 10, 14, "#1d4ed8"); R(x+35, y-1, 8, 3, "#1e3a8a"); R(x+38, y+12, 2, 10, "#1e293b"); // buzón
-    texto("CARTERO", x+2, y+28, "#cbd5e1");
+    texto(a.corto, x-10, y+20, seleccionado === a ? "#FACC15" : "#cbd5e1");
     indicador(a, rx+4, ry-26, t);
   }
 }
 function indicador(a, cx, y, t){
   const e = a.estado;
-  if (e === "trab"){ // globo con puntos
-    R(cx-9,y,18,9,"#f8fafc"); R(cx-2,y+9,3,2,"#f8fafc");
-    for (let i=0;i<3;i++) if (((t/300|0)%4) > i) R(cx-5+i*4, y+4, 2, 2, "#111");
-  } else if (e === "zz"){
-    const k = (t/600|0)%3; texto("Z", cx+4+k*2, y+4-k*3, "#93c5fd");
-  } else if (e === "ok" && a.ultimo && Date.now() - new Date(a.ultimo.updated_at) < 2*3600e3){
+  if (e === "trab"){ R(cx-9,y,18,9,"#f8fafc"); R(cx-2,y+9,3,2,"#f8fafc"); for (let i=0;i<3;i++) if (((t/300|0)%4) > i) R(cx-5+i*4, y+4, 2, 2, "#111"); }
+  else if (e === "ok" && a.ultimo && Date.now() - new Date(a.ultimo.updated_at) < 2*3600e3){
     R(cx-4,y+2,8,8,"#22C55E"); R(cx-2,y+6,1,1,"#fff"); R(cx-1,y+7,1,1,"#fff"); R(cx,y+6,1,1,"#fff"); R(cx+1,y+5,1,1,"#fff"); R(cx+2,y+4,1,1,"#fff");
-  } else if (e === "mal"){
-    R(cx-4,y+2,8,8,"#F43F5E"); R(cx-1,y+3,2,4,"#fff"); R(cx-1,y+8,2,1,"#fff");
-  }
+  } else if (e === "mal"){ R(cx-4,y+2,8,8,"#F43F5E"); R(cx-1,y+3,2,4,"#fff"); R(cx-1,y+8,2,1,"#fff"); }
   if (seleccionado === a){ const k = (t/250|0)%2; R(cx-2, y-6+k, 5, 2, "#FACC15"); R(cx-1, y-4+k, 3, 1, "#FACC15"); }
 }
+
+// ======================= BURBUJAS (HTML) =======================
+const capa = document.getElementById("capa"), burbujas = {};
+function posBurbuja(a){
+  if (a.robot) return a.id === "fabrica" ? [a.x, a.y - 22] : [a.x, a.y - 20];
+  if (a.tic) return [a.x, a.y - 36];
+  if (a.llego && a.mesaPose) return [a.x, a.y - 22];
+  if (a.act === "charla" && a.llego) return [a.x - (a.dir || 1) * 12, a.y - 28];
+  return [a.x, a.y - 28];
+}
+function pintarBurbujas(ahora){
+  for (const a of AGENTES){
+    let el = burbujas[a.id];
+    if (a.fraseFin > ahora && a.frase){
+      if (!el){ el = burbujas[a.id] = document.createElement("div"); el.className = "burbuja" + (a.tic ? " tic" : ""); capa.appendChild(el); }
+      if (el.dataset.t !== a.frase){ el.textContent = a.frase; el.dataset.t = a.frase; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
+      const [x, y] = posBurbuja(a);
+      const cw = capa.clientWidth, ch = capa.clientHeight, half = el.offsetWidth / 2;
+      el.style.left = Math.max(half + 3, Math.min(cw - half - 3, x / W * cw)) + "px";
+      el.style.top = Math.max(el.offsetHeight + 4, y / H * ch) + "px";
+    } else if (el){ el.remove(); delete burbujas[a.id]; }
+  }
+}
+
+// ======================= BUCLE =======================
+let previo = performance.now();
 function cuadro(t){
+  const dt = Math.min(60, t - previo); previo = t;
+  if (evento && t > evento.fin){ evento = null; PERSONAS.forEach(p => { if (["cafe","reunion","trabajar"].includes(p.act)) p.actFin = 0; }); }
+  PERSONAS.forEach(p => actualizarPersona(p, t, dt));
+  actualizarTic(t, dt);
+  PERSONAS.forEach(p => p.sentado = p.llego && p.mesaPose);
+
   fondo(t);
-  for (const a of AGENTES){ if (a.tic) tic(a, t); else if (a.robot) robot(a, t); else escritorio(a, t); }
-  if (!token){ R(0,84,320,30,"rgba(0,0,0,.75)"); texto("CONECTA LA OFICINA ABAJO", 112, 96, "#FACC15"); }
+  planta(226,66); planta(4,236); planta(376,236);
+  // dibujo ordenado por profundidad
+  const items = [];
+  for (const a of AGENTES.filter(a => a.mesa)){ items.push({y: a.mesa[1]+5, f: () => mesa(a, t)}); items.push({y: a.mesa[1]+18, f: () => frenteMesa(a)}); }
+  for (const p of PERSONAS) items.push({y: p.llego && p.mesaPose ? p.mesa[1]+12 : p.y, f: () => persona(p, t)});
+  items.push({y: TIC.y + 0.5, f: () => dibujarTic(t)});
+  items.push({y: 141, f: frenteMuebles});
+  items.push({y: 132, f: () => dibujarPingPong(t)});
+  items.push({y: porId.fabrica.y, f: () => dibujarRobot(porId.fabrica, t)});
+  items.push({y: porId.cartero.y + 10, f: () => dibujarRobot(porId.cartero, t)});
+  items.sort((a,b) => a.y - b.y).forEach(i => i.f());
+  for (const p of PERSONAS) if (!(p.llego && p.mesaPose) && p.estado !== "zz") indicador(p, Math.round(p.x), Math.round(p.y) - 38, t);
+  for (const p of PERSONAS) if (p.llego && p.mesaPose && p.estado !== "zz") indicador(p, p.mesa[0]+16, p.mesa[1]-18, t);
+  if (seleccionado && !seleccionado.robot && !seleccionado.tic && seleccionado.estado === "zz"){
+    const p = seleccionado, sy = p.llego && p.mesaPose ? p.mesa[1]-26 : p.y - 36; const k = (t/250|0)%2;
+    R(p.x-2, sy+k, 5, 2, "#FACC15"); R(p.x-1, sy+2+k, 3, 1, "#FACC15");
+  }
+  // confeti
+  confeti = confeti.filter(c => c.fin > t && c.y < H);
+  for (const c of confeti){ c.y += c.vy*dt; c.x += c.vx*dt + Math.sin((t + c.x*50)/300)*.1; R(c.x, c.y, 2, 2, c.c); }
+  if (!token){ R(0,48,W,14,"rgba(0,0,0,.7)"); texto("MODO DEMO: CONECTA LA OFICINA ABAJO", 124, 53, "#FACC15"); }
+  pintarBurbujas(t);
   requestAnimationFrame(cuadro);
 }
-cv.onclick = ev => {
-  const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left) * 320 / r.width, y = (ev.clientY - r.top) * 200 / r.height;
+
+// ======================= RATÓN / TOQUE =======================
+function enPunto(ev){
+  const r = cv.getBoundingClientRect();
+  return [(ev.clientX - r.left) * W / r.width, (ev.clientY - r.top) * H / r.height, ev.clientX - r.left, ev.clientY - r.top];
+}
+function quienEsta(x, y){
   let mejor = null, dmin = 1e9;
-  for (const a of AGENTES){ const cx = a.x + (a.robot ? 16 : 16), cy = a.y + 8; const d = (cx-x)**2 + (cy-y)**2; if (d < dmin){ dmin = d; mejor = a; } }
-  if (mejor && dmin < 40*40) mostrar(mejor, true);
-};
+  const cajas = [];
+  for (const p of PERSONAS){ const [bx, by] = p.llego && p.mesaPose ? [p.mesa[0]+16, p.mesa[1]] : [p.x, p.y - 11]; cajas.push([p, bx, by]); }
+  cajas.push([TIC, TIC.x, TIC.y - 12], [porId.fabrica, porId.fabrica.x, porId.fabrica.y - 4], [porId.cartero, porId.cartero.x, porId.cartero.y]);
+  for (const [a, bx, by] of cajas){ const d = (bx-x)**2 + ((by-y)*0.8)**2; if (d < dmin){ dmin = d; mejor = a; } }
+  return dmin < 16*16 ? mejor : null;
+}
+const etiqueta = document.getElementById("etiqueta");
+cv.addEventListener("mousemove", ev => {
+  const [x, y, px, py] = enPunto(ev), a = quienEsta(x, y);
+  cv.style.cursor = a || cerca(x,y) ? "pointer" : "default";
+  if (a){ etiqueta.style.display = "block"; etiqueta.textContent = `${a.nombre} · ${a.rol}`; etiqueta.style.left = px + "px"; etiqueta.style.top = py + "px"; }
+  else etiqueta.style.display = "none";
+});
+cv.addEventListener("mouseleave", () => etiqueta.style.display = "none");
+function cerca(x, y){
+  if (x > 240 && x < 262 && y < 46) return "cafe";
+  if (x > 264 && x < 316 && y > 118 && y < 150) return "pingpong";
+  if (x > 66 && x < 172 && y > 184) return "reunion";
+  return null;
+}
+cv.addEventListener("click", ev => {
+  const [x, y] = enPunto(ev), a = quienEsta(x, y);
+  if (a) return tocar(a, false);
+  const c = cerca(x, y);
+  if (c === "cafe") lanzarEvento("cafe");
+  else if (c === "reunion") lanzarEvento("reunion");
+  else if (c === "pingpong"){ const p = pick(libres()); if (p){ p.act = null; p.actFin = 0; } }
+});
 setInterval(() => { document.getElementById("reloj").textContent = "Bogotá " + new Date().toLocaleString("es-CO",{timeZone:"America/Bogota",weekday:"long",hour:"numeric",minute:"2-digit"}); }, 1000);
+setInterval(() => { if (!document.hidden) pintarTarjetas(); if (seleccionado) mostrar(seleccionado); }, 5000);
 
 AGENTES.forEach(a => a.proximo = proximo(a.cron));
 pintarTarjetas(); pintarFeed();
 requestAnimationFrame(cuadro);
+setTimeout(() => decir(TIC, "¡Bienvenido a la oficina! Toca a cualquiera del equipo", 5000), 800);
 if (!token) pedirClave(); else { actualizar(); cargarResumenes(); }
 setInterval(actualizar, 15000);
 setInterval(cargarResumenes, 120000);
