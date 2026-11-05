@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Oficina virtual · Finanzas en 60s</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B1320;--bg2:#13243D;--txt:#F4F6FA;--tenue:#8FA3BF;--verde:#22C55E;--amarillo:#FACC15;--rojo:#F43F5E;--borde:#23344f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'VT323',monospace;font-size:20px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;max-width:1100px;margin:0 auto;flex-wrap:wrap}
+h1{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--verde);margin:0;line-height:1.6}
+.vivo{font-family:'Press Start 2P';font-size:10px;color:var(--rojo)}
+.vivo::before{content:"● ";animation:parp 1s steps(2) infinite}
+@keyframes parp{50%{opacity:.2}}
+main{max-width:1100px;margin:0 auto;padding:0 16px 32px}
+#escena{width:100%;image-rendering:pixelated;image-rendering:crisp-edges;border:4px solid var(--borde);border-radius:6px;background:#000;cursor:pointer;display:block}
+.barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0;color:var(--tenue)}
+button{font-family:'Press Start 2P';font-size:9px;background:var(--bg2);color:var(--txt);border:2px solid var(--borde);padding:8px 10px;border-radius:4px;cursor:pointer}
+button:hover{border-color:var(--verde)}
+#detalle{background:var(--bg2);border:3px solid var(--verde);border-radius:6px;padding:12px 14px;margin:10px 0;display:none}
+#detalle h2{font-family:'Press Start 2P';font-size:12px;margin:0 0 8px;color:var(--amarillo)}
+#detalle pre{white-space:pre-wrap;font-family:'VT323';font-size:19px;margin:8px 0 0;color:var(--txt);max-height:300px;overflow:auto}
+.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:12px}
+.t{background:var(--bg2);border:2px solid var(--borde);border-radius:6px;padding:10px;cursor:pointer}
+.t:hover{border-color:var(--verde)}
+.t b{font-family:'Press Start 2P';font-size:10px;display:block;margin-bottom:6px}
+.est{font-family:'Press Start 2P';font-size:8px;padding:3px 6px;border-radius:3px;display:inline-block;margin-bottom:4px}
+.trab{background:var(--amarillo);color:#000}.ok{background:var(--verde);color:#000}.mal{background:var(--rojo);color:#fff}.zz{background:#2b3b55;color:var(--tenue)}
+.peq{color:var(--tenue);font-size:17px;line-height:1.25}
+#login{background:var(--bg2);border:3px solid var(--amarillo);border-radius:6px;padding:16px;margin:12px 0;display:none}
+#login ol{padding-left:22px;line-height:1.35}
+#login input{width:100%;font-family:'VT323';font-size:20px;padding:8px;background:var(--bg);color:var(--txt);border:2px solid var(--borde);border-radius:4px;margin:8px 0}
+a{color:var(--verde)}
+#feed{margin-top:16px}
+#feed h3{font-family:'Press Start 2P';font-size:10px;color:var(--tenue)}
+#feed div{border-bottom:1px dashed var(--borde);padding:4px 0;font-size:18px}
+#error{color:var(--rojo)}
+</style>
+</head>
+<body>
+<header>
+  <h1>OFICINA VIRTUAL<br>FINANZAS EN 60s</h1>
+  <span class="vivo">EN VIVO</span>
+</header>
+<main>
+  <div id="login">
+    <b style="font-family:'Press Start 2P';font-size:11px;color:var(--amarillo)">CONECTAR LA OFICINA (una sola vez por dispositivo)</b>
+    <ol>
+      <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained token nuevo</a>.</li>
+      <li>Nombre: <i>oficina</i>. Expiración: la que quieras (p. ej. 1 año).</li>
+      <li>Repository access: <b>Only select repositories</b> → <b>canal-finanzas</b>.</li>
+      <li>Permissions → Repository: <b>Actions: Read-only</b> y <b>Contents: Read-only</b>.</li>
+      <li>Pulsa <b>Generate token</b>, cópialo y pégalo aquí. Solo se guarda en este navegador.</li>
+    </ol>
+    <input id="clave" type="password" placeholder="github_pat_..." autocomplete="off">
+    <button id="guardar">ENTRAR A LA OFICINA</button>
+    <div id="error"></div>
+  </div>
+
+  <canvas id="escena" width="320" height="200" aria-label="Oficina virtual con los agentes del canal"></canvas>
+  <div class="barra">
+    <span id="reloj">--</span>
+    <span id="actualizado">Toca un escritorio para ver qué hace cada agente</span>
+    <button id="salir" title="Borrar la clave de este navegador">SALIR</button>
+  </div>
+  <div id="detalle"></div>
+  <div class="tarjetas" id="tarjetas"></div>
+  <div id="feed"><h3>ÚLTIMA ACTIVIDAD</h3><div id="lista"></div></div>
+</main>
+
+<script>
+const REPO = "finanzasens60-maker/canal-finanzas";
+const API = "https://api.github.com/repos/" + REPO;
+const CLAVE = "oficina_fin60_token";
+
+// Agentes: posición en la oficina (px de 320x200), colores y horarios (cron UTC)
+const AGENTES = [
+  {id:"supervisor", nombre:"Tic (supervisor)", tarea:"Revisa que todo funcione", x:136, y:52, tic:true, cron:["41 13 * * *"]},
+  {id:"guionista", nombre:"Guionista", tarea:"Escribe los guiones", x:22, y:92, pelo:"#5b3a1e", ropa:"#3b82f6", piel:"#f1c27d", cron:["23 20 * * 0,2,4"]},
+  {id:"optimizador", nombre:"Optimizador", tarea:"Títulos y miniaturas", x:84, y:92, pelo:"#111", ropa:"#a855f7", piel:"#c68642", cron:["19 22 * * 0,2,4"]},
+  {id:"editor", nombre:"Editor", tarea:"Verifica cifras y guiones", x:146, y:92, pelo:"#d4a017", ropa:"#ef4444", piel:"#ffdbac", cron:["37 23 * * 0,2,4"]},
+  {id:"analista", nombre:"Analista", tarea:"Estadísticas y estrategia", x:208, y:92, pelo:"#7a7a7a", ropa:"#14b8a6", piel:"#e0ac69", gafas:true, cron:["13 16 * * 3,6"]},
+  {id:"comunidad", nombre:"Comunidad", tarea:"Responde comentarios", x:22, y:146, pelo:"#8b1a1a", ropa:"#f97316", piel:"#f1c27d", cron:["47 16 * * *","47 0 * * *"]},
+  {id:"promocion", nombre:"Promoción", tarea:"Prepara publicaciones", x:84, y:146, pelo:"#222", ropa:"#ec4899", piel:"#8d5524", cron:["47 14 * * *"]},
+  {id:"multiplataforma", nombre:"Multiplataforma", tarea:"TikTok, Reels y Facebook", x:146, y:146, pelo:"#4a2c0f", ropa:"#06b6d4", piel:"#ffdbac", cron:["23 14 * * 1,3,5"]},
+  {id:"fabrica", nombre:"Fábrica de videos", tarea:"Genera y sube los videos", x:262, y:70, robot:true, flujo:"Fabrica diaria de videos", cron:["17 11 * * *"]},
+  {id:"cartero", nombre:"Robot de comunidad", tarea:"Publica respuestas y estadísticas", x:262, y:146, robot:true, flujo:"Comunidad y estadisticas (2 veces al dia)", cron:["17 18 * * *","47 2 * * *"]},
+];
+const porId = Object.fromEntries(AGENTES.map(a => [a.id, a]));
+AGENTES.forEach(a => Object.assign(a, {estado:"zz", paso:"", ultimo:null, resumen:"", proximo:null}));
+
+let token = null; try { token = localStorage.getItem(CLAVE); } catch(e) {}
+let seleccionado = null, recientes = [];
+
+// ---------- utilidades ----------
+const hBog = d => d.toLocaleString("es-CO",{timeZone:"America/Bogota",weekday:"short",hour:"numeric",minute:"2-digit"});
+function hace(d){ const s=(Date.now()-d)/1000; if(s<60) return "hace un momento"; if(s<3600) return `hace ${Math.round(s/60)} min`; if(s<86400) return `hace ${Math.round(s/3600)} h`; return `hace ${Math.round(s/86400)} d`; }
+function proximo(crons){
+  const ahora = new Date(); let mejor = null;
+  for (const c of crons){
+    const [m,h,,,dw] = c.split(" ");
+    const dias = dw === "*" ? [0,1,2,3,4,5,6] : dw.split(",").map(Number);
+    for (let i=0;i<8;i++){
+      const d = new Date(Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate()+i, +h, +m));
+      if (d > ahora && dias.includes(d.getUTCDay())) { if (!mejor || d < mejor) mejor = d; break; }
+    }
+  }
+  return mejor;
+}
+async function gh(ruta, raw){
+  const r = await fetch(API + ruta, {headers:{Authorization:"Bearer "+token, Accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json"}, cache:"no-store"});
+  if (r.status === 401 || r.status === 403) throw new Error("clave");
+  if (!r.ok) throw new Error(r.status);
+  return raw ? r.text() : r.json();
+}
+
+// ---------- datos de GitHub ----------
+function agenteDeRun(run){
+  const m = /^Agente (\w+)/.exec(run.display_title || "");
+  if (m && porId[m[1]]) return porId[m[1]];
+  return AGENTES.find(a => a.flujo && a.flujo === run.name) || null;
+}
+async function actualizar(){
+  if (!token) return;
+  try {
+    const {workflow_runs: runs} = await gh("/actions/runs?per_page=50");
+    const vistos = new Set();
+    recientes = [];
+    for (const run of runs){
+      const a = agenteDeRun(run); if (!a) continue;
+      recientes.push({a, run});
+      if (vistos.has(a.id)) continue; vistos.add(a.id);
+      a.ultimo = run;
+      if (run.status !== "completed"){
+        a.estado = "trab"; a.paso = "Arrancando…";
+        try {
+          const {jobs} = await gh(`/actions/runs/${run.id}/jobs`);
+          const st = (jobs[0]?.steps || []).find(s => s.status === "in_progress");
+          if (st) a.paso = st.name;
+        } catch(e) {}
+      } else {
+        a.estado = run.conclusion === "success" ? "ok" : (run.conclusion === "cancelled" || run.conclusion === "skipped" ? "zz" : "mal");
+        a.paso = "";
+      }
+    }
+    AGENTES.forEach(a => a.proximo = proximo(a.cron));
+    document.getElementById("actualizado").textContent = "Actualizado " + new Date().toLocaleTimeString("es-CO",{timeZone:"America/Bogota"});
+    pintarTarjetas(); pintarFeed(); if (seleccionado) mostrar(seleccionado);
+  } catch(e){
+    if (e.message === "clave"){ pedirClave("La clave no funciona o expiró. Crea una nueva."); }
+    else document.getElementById("actualizado").textContent = "Sin conexión con GitHub, reintentando…";
+  }
+}
+async function cargarResumenes(){
+  if (!token) return;
+  for (const a of AGENTES){
+    if (a.robot) continue;
+    try { const j = JSON.parse(await gh(`/contents/oficina/estado/${a.id}.json`, true)); a.resumen = j.resumen || ""; a.fechaResumen = j.fecha; }
+    catch(e){ if (e.message === "clave") return; }
+  }
+  if (seleccionado) mostrar(seleccionado);
+}
+
+// ---------- interfaz ----------
+const ETQ = {trab:"TRABAJANDO", ok:"LISTO", mal:"CON ERROR", zz:"DESCANSANDO"};
+function pintarTarjetas(){
+  document.getElementById("tarjetas").innerHTML = AGENTES.map(a => {
+    const e = a.estado, u = a.ultimo ? new Date(a.ultimo.updated_at) : null;
+    const desc = e === "trab" ? `En: ${a.paso}` : (u ? `Último turno ${hace(u)}` : "Aún sin turnos");
+    return `<div class="t" data-id="${a.id}"><b>${a.nombre}</b><span class="est ${e}">${ETQ[e]}</span><div class="peq">${a.tarea}<br>${desc}<br>Próximo: ${a.proximo ? hBog(a.proximo) : "—"}</div></div>`;
+  }).join("");
+  document.querySelectorAll(".t").forEach(t => t.onclick = () => mostrar(porId[t.dataset.id], true));
+}
+function pintarFeed(){
+  document.getElementById("lista").innerHTML = recientes.slice(0, 12).map(({a, run}) => {
+    const e = run.status !== "completed" ? "⏳ trabajando" : run.conclusion === "success" ? "✅ terminó" : run.conclusion === "cancelled" ? "⏹ cancelado" : "❌ falló";
+    return `<div>${hBog(new Date(run.created_at))} · <b>${a.nombre}</b> ${e} · <a href="${run.html_url}" target="_blank" rel="noopener">ver</a></div>`;
+  }).join("") || "<div>Sin actividad todavía.</div>";
+}
+function esc(s){ return (s||"").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function mostrar(a, desplazar){
+  seleccionado = a;
+  const d = document.getElementById("detalle"); d.style.display = "block";
+  const u = a.ultimo;
+  d.innerHTML = `<h2>${a.nombre}</h2><span class="est ${a.estado}">${ETQ[a.estado]}</span>
+   <div class="peq">${a.tarea}${a.estado === "trab" ? `<br>Paso actual: <b>${esc(a.paso)}</b>` : ""}
+   ${u ? `<br>Último turno: ${hBog(new Date(u.created_at))} (${hace(new Date(u.updated_at))}) · <a href="${u.html_url}" target="_blank" rel="noopener">ver en GitHub</a>` : ""}
+   <br>Próximo turno: ${a.proximo ? hBog(a.proximo) : "—"}</div>
+   ${a.resumen ? `<pre>💬 ${esc(a.resumen)}</pre>` : (a.robot ? "" : `<pre class="peq">Aún no hay resumen guardado de este agente.</pre>`)}`;
+  if (desplazar) d.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+function pedirClave(msg){
+  document.getElementById("login").style.display = "block";
+  document.getElementById("error").textContent = msg || "";
+}
+document.getElementById("guardar").onclick = async () => {
+  const v = document.getElementById("clave").value.trim(); if (!v) return;
+  token = v;
+  try { await gh(""); try { localStorage.setItem(CLAVE, v); } catch(e) {}
+        document.getElementById("login").style.display = "none"; document.getElementById("clave").value = "";
+        actualizar(); cargarResumenes(); }
+  catch(e){ token = null; pedirClave("No pude entrar con esa clave. Revisa que tenga acceso a canal-finanzas con Actions y Contents en lectura."); }
+};
+document.getElementById("salir").onclick = () => { try { localStorage.removeItem(CLAVE); } catch(e) {} token = null; pedirClave("Clave borrada de este navegador."); };
+
+// ---------- escena pixel art ----------
+const cv = document.getElementById("escena"), g = cv.getContext("2d");
+g.imageSmoothingEnabled = false;
+const R = (x,y,w,h,c) => { g.fillStyle = c; g.fillRect(x|0, y|0, w, h); };
+const PIX = { // fuente mínima 3x5 para etiquetas
+  A:"010101111101101",B:"110101110101110",C:"011100100100011",D:"110101101101110",E:"111100110100111",F:"111100110100100",G:"011100101101011",H:"101101111101101",I:"111010010010111",J:"001001001101010",K:"101101110101101",L:"100100100100111",M:"101111111101101",N:"110101101101101",O:"010101101101010",P:"110101110100100",Q:"010101101110011",R:"110101110101101",S:"011100010001110",T:"111010010010010",U:"101101101101111",V:"101101101101010",W:"101101111111101",X:"101101010101101",Y:"101101010010010",Z:"111001010100111",
+  "0":"111101101101111","1":"010110010010111","2":"110001010100111","3":"110001010001110","4":"101101111001001","5":"111100110001110","6":"011100111101111","7":"111001010010010","8":"111101111101111","9":"111101111001110",":":"000010000010000"," ":"000000000000000","!":"010010010000010","?":"110001010000010",".":"000000000000010","-":"000000111000000"
+};
+function texto(s, x, y, c){ s = s.toUpperCase(); for (const ch of s){ const p = PIX[ch] || PIX[" "]; for (let i=0;i<15;i++) if (p[i]==="1") R(x+i%3, y+(i/3|0), 1, 1, c); x += 4; } }
+const ETIQ = {supervisor:"TIC",guionista:"GUION",optimizador:"CLICS",editor:"EDITOR",analista:"DATOS",comunidad:"COMUNIDAD",promocion:"PROMO",multiplataforma:"REDES",fabrica:"FABRICA",cartero:"CARTERO"};
+
+function fondo(t){
+  // pared
+  R(0,0,320,40,"#1b2a44"); R(0,36,320,4,"#0f1a2c");
+  for (let x=0;x<320;x+=16) R(x,0,1,36,"#203152");
+  // ventanas con cielo de Bogotá (día/noche)
+  const hora = +new Date().toLocaleString("en-US",{timeZone:"America/Bogota",hour:"numeric",hour12:false});
+  const dia = hora >= 6 && hora < 18;
+  for (const wx of [8, 232]){ R(wx,6,64,24,"#0b0f1a"); R(wx+2,8,60,20, dia ? "#5fb3ff" : "#0d1b3d");
+    if (dia){ R(wx+44,11,6,6,"#ffe066"); R(wx+10,16,12,3,"#fff"); R(wx+13,14,6,2,"#fff"); }
+    else { for (let i=0;i<6;i++) R(wx+5+i*9, 10+(i*7)%14, 1,1,"#fff"); R(wx+48,12,5,3,"#e5e7eb"); R(wx+49,11,3,5,"#e5e7eb"); }
+    R(wx+31,8,2,20,"#0b0f1a"); for (let i=0;i<5;i++) R(wx+4+i*12, 26, 6, 2, "#0b0f1a"); }
+  // letrero
+  R(96,6,128,24,"#0b1320"); R(97,7,126,22,"#13243d");
+  texto("FINANZAS EN 60S", 104, 10, "#22C55E");
+  const hh = new Date().toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"2-digit",minute:"2-digit",hour12:false});
+  texto(hh, 148, 19, (t/500|0)%2 ? "#FACC15" : "#d4b10f");
+  // piso
+  for (let y=40;y<200;y+=10) for (let x=0;x<320;x+=10) R(x,y,10,10, ((x+y)/10)%2 ? "#26344d" : "#2c3b57");
+  // alfombra de Tic
+  R(118,48,84,36,"#14532d"); R(120,50,80,32,"#166534");
+  // plantas y cafetera
+  planta(4,180); planta(306,40+8);
+  R(300,180,14,16,"#444"); R(302,176,10,6,"#222"); R(304,184,6,6, (t/400|0)%2 ? "#a16207" : "#854d0e");
+  // banda transportadora fábrica
+  R(250,104,66,6,"#3f3f46"); for (let i=0;i<8;i++) R(250+((i*9+(t/60|0))%66),105,3,4,"#18181b");
+}
+function planta(x,y){ R(x,y-2,10,8,"#7c2d12"); R(x+1,y-10,8,9,"#15803d"); R(x+3,y-14,4,6,"#16a34a"); R(x-1,y-7,3,4,"#16a34a"); R(x+8,y-8,3,4,"#16a34a"); }
+
+function escritorio(a, t){
+  const {x,y} = a, trab = a.estado === "trab";
+  // monitor
+  R(x+6,y-4,20,13,"#0f172a");
+  const pant = trab ? "#0e3a22" : a.estado === "mal" ? "#4c0519" : "#111827";
+  R(x+7,y-3,18,10,pant);
+  if (trab) for (let i=0;i<4;i++){ const w = 3 + ((t/120 + i*3)|0)%12; R(x+8, y-2+i*2, w, 1, "#22C55E"); }
+  if (a.estado === "mal") R(x+15,y-2,2,6,"#F43F5E"), R(x+15,y+5,2,1,"#F43F5E");
+  R(x+14,y+9,4,2,"#0f172a");
+  // persona (detrás del escritorio)
+  persona(a, x+11, y+2, t);
+  // escritorio
+  R(x,y+11,32,6,"#8b5a2b"); R(x,y+11,32,1,"#a0522d"); R(x+2,y+17,3,8,"#5c3a1a"); R(x+27,y+17,3,8,"#5c3a1a");
+  R(x+9,y+12,14,2,"#d4d4d8"); // teclado
+  if (a.id === "guionista") R(x+25,y+8,5,3,"#fef3c7");
+  if (a.id === "analista") { R(x+1,y+6,2,5,"#22C55E"); R(x+4,y+4,2,7,"#FACC15"); }
+  // etiqueta
+  texto(ETIQ[a.id], x + 16 - ETIQ[a.id].length*2, y+28, "#cbd5e1");
+  indicador(a, x+16, y-14, t);
+}
+function persona(a, cx, cy, t){
+  const trab = a.estado === "trab", dormido = a.estado === "zz";
+  const bob = trab ? ((t/150|0)%2) : 0;
+  const cab = dormido ? 2 : 0;
+  R(cx-4, cy+3, 10, 8, a.ropa);                      // cuerpo
+  R(cx-3, cy-5+cab, 8, 8, a.piel);                    // cabeza
+  R(cx-3, cy-6+cab, 8, 3, a.pelo); R(cx-4, cy-5+cab, 1, 4, a.pelo); R(cx+5, cy-5+cab, 1, 4, a.pelo);
+  if (!dormido){ R(cx-1, cy-2, 1, 1, "#111"); R(cx+2, cy-2, 1, 1, "#111"); }
+  else { R(cx-1, cy-1+cab, 2, 1, "#111"); R(cx+2, cy-1+cab, 2, 1, "#111"); }
+  if (a.gafas && !dormido){ R(cx-2,cy-3,3,3,"#111"); R(cx+1,cy-3,3,3,"#111"); R(cx-1,cy-2,1,1,a.piel); R(cx+2,cy-2,1,1,a.piel); }
+  // brazos tecleando
+  R(cx-6, cy+6 - bob, 3, 3, a.piel); R(cx+7, cy+6 - (trab ? 1-bob : 0), 3, 3, a.piel);
+}
+function tic(a, t){
+  const {x,y} = a, trab = a.estado === "trab";
+  const cx = x + 24, cy = y + 12 + (Math.sin(t/400)*1.5|0);
+  // cronómetro: botón, cuerpo, cara
+  R(cx-2, cy-14, 4, 3, "#94a3b8"); R(cx-4, cy-12, 8, 2, "#64748b");
+  for (let dy=-10; dy<=10; dy++){ const w = Math.round(Math.sqrt(100 - dy*dy)); R(cx-w, cy+dy, w*2, 1, "#16a34a"); }
+  for (let dy=-8; dy<=8; dy++){ const w = Math.round(Math.sqrt(64 - dy*dy)); R(cx-w, cy+dy, w*2, 1, "#f8fafc"); }
+  const ang = t/ (trab ? 150 : 900); R(cx + Math.round(Math.cos(ang)*5) , cy + Math.round(Math.sin(ang)*5), 2, 2, "#22C55E");
+  const parp = ((t/1800|0) % 5 === 0) && (t % 1800 < 150);
+  if (a.estado === "zz"){ R(cx-4,cy-1,3,1,"#111"); R(cx+2,cy-1,3,1,"#111"); }
+  else if (!parp){ R(cx-4,cy-3,2,3,"#111"); R(cx+3,cy-3,2,3,"#111"); } else { R(cx-4,cy-2,2,1,"#111"); R(cx+3,cy-2,2,1,"#111"); }
+  R(cx-2, cy+3, 5, 1, "#111"); R(cx-3, cy+2, 1, 1, "#111"); R(cx+3, cy+2, 1, 1, "#111");
+  // bracitos (saluda si trabaja)
+  const s = trab ? ((t/200|0)%2)*2 : 0;
+  R(cx-13, cy-2 - s, 3, 6, "#16a34a"); R(cx+10, cy-2, 3, 6, "#16a34a");
+  texto("TIC", cx-6, y+30, "#22C55E");
+  indicador(a, cx, y-6, t);
+}
+function robot(a, t){
+  const {x,y} = a, trab = a.estado === "trab";
+  if (a.id === "fabrica"){ // máquina de videos
+    R(x-6,y-10,46,30,"#334155"); R(x-4,y-8,42,26,"#475569");
+    R(x,y-4,18,12,"#0f172a"); R(x+1,y-3,16,10, trab ? "#7f1d1d" : "#1e293b");
+    if (trab){ R(x+7,y-1,1,6,"#fff"); R(x+8,y,1,4,"#fff"); R(x+9,y+1,1,2,"#fff"); }
+    R(x+22,y-4,12,4, trab && (t/250|0)%2 ? "#22C55E" : "#14532d"); R(x+22,y+2,12,4, a.estado === "mal" ? "#F43F5E" : "#3f3f46");
+    if (trab){ for (let i=0;i<3;i++){ const px = x+40 + ((t/30 + i*22)|0)%26; R(px,y+25,6,5,"#ef4444"); R(px+2,y+26,1,3,"#fff"); R(px+3,y+27,1,1,"#fff"); } }
+    texto("FABRICA", x+4, y+22, "#cbd5e1");
+    indicador(a, x+17, y-22, t);
+  } else { // robot cartero
+    const pasos = trab ? Math.round(Math.sin(t/300)*14) : 0;
+    const rx = x + 10 + pasos, ry = y;
+    R(rx+3, ry-14, 1, 3, "#94a3b8"); R(rx+2, ry-16, 3, 2, trab && (t/200|0)%2 ? "#F43F5E" : "#64748b");
+    R(rx-2, ry-11, 11, 9, "#94a3b8"); R(rx, ry-9, 2, 2, trab ? "#22C55E" : "#334155"); R(rx+5, ry-9, 2, 2, trab ? "#22C55E" : "#334155");
+    R(rx-3, ry-1, 13, 11, "#64748b"); R(rx+1, ry+2, 5, 4, "#f8fafc"); R(rx+1, ry+2, 5, 1, "#ef4444");
+    R(rx-1, ry+10, 3, 4, "#334155"); R(rx+5, ry+10, 3, 4, "#334155");
+    R(x+34, y-2, 10, 14, "#1d4ed8"); R(x+35, y-1, 8, 3, "#1e3a8a"); R(x+38, y+12, 2, 10, "#1e293b"); // buzón
+    texto("CARTERO", x+2, y+28, "#cbd5e1");
+    indicador(a, rx+4, ry-26, t);
+  }
+}
+function indicador(a, cx, y, t){
+  const e = a.estado;
+  if (e === "trab"){ // globo con puntos
+    R(cx-9,y,18,9,"#f8fafc"); R(cx-2,y+9,3,2,"#f8fafc");
+    for (let i=0;i<3;i++) if (((t/300|0)%4) > i) R(cx-5+i*4, y+4, 2, 2, "#111");
+  } else if (e === "zz"){
+    const k = (t/600|0)%3; texto("Z", cx+4+k*2, y+4-k*3, "#93c5fd");
+  } else if (e === "ok" && a.ultimo && Date.now() - new Date(a.ultimo.updated_at) < 2*3600e3){
+    R(cx-4,y+2,8,8,"#22C55E"); R(cx-2,y+6,1,1,"#fff"); R(cx-1,y+7,1,1,"#fff"); R(cx,y+6,1,1,"#fff"); R(cx+1,y+5,1,1,"#fff"); R(cx+2,y+4,1,1,"#fff");
+  } else if (e === "mal"){
+    R(cx-4,y+2,8,8,"#F43F5E"); R(cx-1,y+3,2,4,"#fff"); R(cx-1,y+8,2,1,"#fff");
+  }
+  if (seleccionado === a){ const k = (t/250|0)%2; R(cx-2, y-6+k, 5, 2, "#FACC15"); R(cx-1, y-4+k, 3, 1, "#FACC15"); }
+}
+function cuadro(t){
+  fondo(t);
+  for (const a of AGENTES){ if (a.tic) tic(a, t); else if (a.robot) robot(a, t); else escritorio(a, t); }
+  if (!token){ R(0,84,320,30,"rgba(0,0,0,.75)"); texto("CONECTA LA OFICINA ABAJO", 112, 96, "#FACC15"); }
+  requestAnimationFrame(cuadro);
+}
+cv.onclick = ev => {
+  const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left) * 320 / r.width, y = (ev.clientY - r.top) * 200 / r.height;
+  let mejor = null, dmin = 1e9;
+  for (const a of AGENTES){ const cx = a.x + (a.robot ? 16 : 16), cy = a.y + 8; const d = (cx-x)**2 + (cy-y)**2; if (d < dmin){ dmin = d; mejor = a; } }
+  if (mejor && dmin < 40*40) mostrar(mejor, true);
+};
+setInterval(() => { document.getElementById("reloj").textContent = "Bogotá " + new Date().toLocaleString("es-CO",{timeZone:"America/Bogota",weekday:"long",hour:"numeric",minute:"2-digit"}); }, 1000);
+
+AGENTES.forEach(a => a.proximo = proximo(a.cron));
+pintarTarjetas(); pintarFeed();
+requestAnimationFrame(cuadro);
+if (!token) pedirClave(); else { actualizar(); cargarResumenes(); }
+setInterval(actualizar, 15000);
+setInterval(cargarResumenes, 120000);
+</script>
+</body>
+</html>
